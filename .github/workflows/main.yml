@@ -1,0 +1,34 @@
+name: Build VST3 (Windows)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch fonts if they are not in the repo
+        shell: bash
+        run: |
+          mkdir -p Assets
+          B=https://raw.githubusercontent.com/google/fonts/main/ofl
+          [ -f Assets/VT323-Regular.ttf ]        || curl -fL -o Assets/VT323-Regular.ttf        $B/vt323/VT323-Regular.ttf
+          [ -f Assets/PressStart2P-Regular.ttf ] || curl -fL -o Assets/PressStart2P-Regular.ttf $B/pressstart2p/PressStart2P-Regular.ttf
+          [ -f Assets/OFL-VT323.txt ]            || curl -fL -o Assets/OFL-VT323.txt            $B/vt323/OFL.txt
+          [ -f Assets/OFL-PressStart2P.txt ]     || curl -fL -o Assets/OFL-PressStart2P.txt     $B/pressstart2p/OFL.txt
+
+      - name: Configure
+        run: cmake -S . -B build
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Upload VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: PEPEL-SAMPLE-VST3
+          path: build/PepelSample_artefacts/Release/VST3/
